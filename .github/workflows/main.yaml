@@ -47,6 +47,12 @@ jobs:
             buildah tag alpine:latest ${{ env.IMAGE }}
             buildah push ${{ env.IMAGE }}
 
+        - name: generate an AWS credentials file
+          run: |
+            echo "[default]" > ~/.aws/credentials
+            echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+            echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+
         - name: Terraform Init
           run: terraform init
 
