@@ -49,8 +49,14 @@ jobs:
             buildah tag alpine:latest ${{ env.IMAGE }}
             buildah push ${{ env.IMAGE }}
 
-        - name: inject the AWS credentials into the provider tf file after region
-          run: sed -i "s/region = \"us-east-2\"/region = \"us-east-2\"\n  access_key = \"${AWS_ACCESS_KEY_ID}\"\n  secret_key = \"${AWS_SECRET_ACCESS_KEY}\"/g" provider.tf
+        - name: configure AWS credential files
+          run: |
+            mkdir -p ~/.aws
+            echo "[default]" > ~/.aws/credentials
+            echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+            echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+            echo "[default]" > ~/.aws/config
+            echo "region = ${{ env.AWS_REGION }}" >> ~/.aws/config
 
         - name: Terraform Init
           run: terraform init
