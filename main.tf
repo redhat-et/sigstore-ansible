@@ -36,10 +36,6 @@ variable "rh_password" {
   type      = string
 }
 
-provider "aws" {
-  region = "us-east-2"
-}
-
 // generate a new security group to allow ssh and https traffic
 resource "aws_security_group" "sigstore-access" {
   name        = "sigstore-access"
