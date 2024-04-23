@@ -11,6 +11,7 @@ env:
   GO_VERSION: 1.21
   AWS_REGION: us-east-2
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   BASE_HOSTNAME: ${{ secrets.BASE_DOMAIN }}
   FULCIO_URL: https://fulcio.${{ secrets.BASE_DOMAIN }}
