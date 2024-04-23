@@ -38,7 +38,6 @@ variable "rh_password" {
 
 provider "aws" {
   region = "us-east-2"
-
 }
 
 // generate a new security group to allow ssh and https traffic

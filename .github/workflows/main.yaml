@@ -23,6 +23,8 @@ env:
   TF_VAR_vpc_id: ${{ secrets.VPC_ID }}
   TF_VAR_rh_username: ${{ secrets.RH_USERNAME }}
   TF_VAR_rh_password: ${{ secrets.RH_PASSWORD }}
+  TF_VAR_aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  TF_VAR_aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   IMAGE: ttl.sh/sigstore-test:15m
 
 jobs:
@@ -43,13 +45,6 @@ jobs:
             buildah pull alpine:latest
             buildah tag alpine:latest ${{ env.IMAGE }}
             buildah push ${{ env.IMAGE }}
-
-        - name: Login to AWS
-          uses: aws-actions/configure-aws-credentials@v1
-          with:
-            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            aws-region: us-east-2
 
         - name: Terraform Init
           run: terraform init
