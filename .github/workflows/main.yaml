@@ -37,6 +37,9 @@ jobs:
           with:
             terraform_version: 1.8.1
 
+        - name: update packages and the system
+          run: sudo apt-get update && sudo apt-get upgrade -y
+
         - name: Checkout code
           uses: actions/checkout@v2
 
