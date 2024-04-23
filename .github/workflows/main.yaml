@@ -38,9 +38,6 @@ jobs:
         - name: sshkeygen for ansible
           run: ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
 
-        - name: docker login registry.redhat.io
-          run: echo ${{ secrets.RH_PASSWORD }} | docker login -u ${{ secrets.RH_USERNAME }} --password-stdin registry.redhat.io
-
         - name: build push sign and tag
           run: |
             buildah pull alpine:latest
