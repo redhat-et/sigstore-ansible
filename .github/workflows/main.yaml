@@ -11,18 +11,21 @@ env:
   GO_VERSION: 1.21
   AWS_REGION: us-east-2
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   BASE_HOSTNAME: ${{ secrets.BASE_DOMAIN }}
   FULCIO_URL: https://fulcio.${{ secrets.BASE_DOMAIN }}
   TUF_URL: https://tuf.${{ secrets.BASE_DOMAIN }}
   KEYCLOAK_URL: ${{ secrets.KEYCLOAK_URL }}
-  KEYCLOAK_REALM: sigstore
-  KEYCLOAK_OIDC_ISSUER: ${{ secrets.KEYCLOAK_URL}}/realms/sigstore
+  KEYCLOAK_REALM: trusted-artifact-signer
+  KEYCLOAK_OIDC_ISSUER: ${{ secrets.KEYCLOAK_URL}}/realms/trusted-artifact-signer
   REKOR_URL: https://rekor.${{ secrets.BASE_DOMAIN }}
   TF_VAR_base_domain: ${{ secrets.BASE_DOMAIN }}
   TF_VAR_vpc_id: ${{ secrets.VPC_ID }}
   TF_VAR_rh_username: ${{ secrets.RH_USERNAME }}
   TF_VAR_rh_password: ${{ secrets.RH_PASSWORD }}
+  TF_VAR_aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  TF_VAR_aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   IMAGE: ttl.sh/sigstore-test:15m
 
 jobs:
@@ -31,6 +34,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - uses: hashicorp/setup-terraform@v3
+          with:
+            terraform_version: 1.8.1
 
         - name: Checkout code
           uses: actions/checkout@v2
@@ -38,22 +43,26 @@ jobs:
         - name: sshkeygen for ansible
           run: ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
 
-
-        - name: docker login registry.redhat.io
-          run: echo ${{ secrets.RH_PASSWORD }} | docker login -u ${{ secrets.RH_USERNAME }} --password-stdin registry.redhat.io
-
         - name: build push sign and tag
           run: |
             buildah pull alpine:latest
             buildah tag alpine:latest ${{ env.IMAGE }}
             buildah push ${{ env.IMAGE }}
 
+        - name: configure AWS credential files
+          run: |
+            mkdir -p ~/.aws
+            echo "[default]" > ~/.aws/credentials
+            echo "aws_access_key_id = ${{ secrets.AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+            echo "aws_secret_access_key = ${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+            echo "[default]" > ~/.aws/config
+            echo "region = ${{ env.AWS_REGION }}" >> ~/.aws/config
+
         - name: Terraform Init
           run: terraform init
 
         - name: Terraform Apply
           run: terraform apply -auto-approve
-
 
         - name: install cosign
           uses: sigstore/cosign-installer@v3.3.0
@@ -65,8 +74,8 @@ jobs:
 
         - name: sign and verify
           run: |
-            TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "username=jdoe" -d "password=secure" -d "grant_type=password" -d "scope=openid" -d "client_id=sigstore" https://keycloak-keycloak-system.apps.platform-sts.pcbk.p1.openshiftapps.com/auth/realms/sigstore/protocol/openid-connect/token |  sed -E 's/.*"access_token":"([^"]*).*/\1/')
-            cosign sign -y --fulcio-url=${{ env.FULCIO_URL}} --rekor-url=${{ env.REKOR_URL}} --oidc-issuer=${{ env.KEYCLOAK_OIDC_ISSUER}} --identity-token=$TOKEN ${{ env.IMAGE }}
+            TOKEN=$(curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "username=jdoe" -d "password=secure" -d "grant_type=password" -d "scope=openid" -d "client_id=sigstore" ${{ env.KEYCLOAK_OIDC_ISSUER }}/protocol/openid-connect/token |  sed -E 's/.*"access_token":"([^"]*).*/\1/')
+            cosign sign -y --fulcio-url=${{ env.FULCIO_URL}} --rekor-url=${{ env.REKOR_URL}} --oidc-issuer=${{ env.KEYCLOAK_OIDC_ISSUER}} --identity-token=$TOKEN --oidc-client-id=${{ secrets.KEYCLOAK_REALM }} ${{ env.IMAGE }}
             cosign verify --rekor-url=${{ env.REKOR_URL}} --certificate-identity-regexp ".*@redhat" --certificate-oidc-issuer-regexp ".*keycloak.*" ${{ env.IMAGE }}
 
         - name: Terraform Destroy
