@@ -26,9 +26,9 @@ Utilize the steps below to understand how to setup and execute the provisioning.
 
 Ansible must be installed and configured on a control node that will be used to perform the automation.
 
-NOTE: Future improvements will make use of an Execution environment
-
 Perform the following steps to prepare the control node for execution.
+
+A RHEL 8.8+ or a RHEL 9.2+ server should be used to run the RHTAS components.
 
 ### Dependencies
 
