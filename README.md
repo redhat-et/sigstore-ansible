@@ -1,3 +1,5 @@
+:warning: This repository is archived. Please proceed to https://github.com/securesign/artifact-signer-ansible
+
 # sigstore-ansible
 
 Automation to deploy the sigstore ecosystem on RHEL
