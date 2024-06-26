@@ -40,7 +40,11 @@ jobs:
 
 
         - name: docker login registry.redhat.io
-          run: echo ${{ secrets.RH_PASSWORD }} | docker login -u ${{ secrets.RH_USERNAME }} --password-stdin registry.redhat.io
+          uses: docker/login-action@v2
+          with:
+            username: ${{ secrets.RH_USERNAME }}
+            password: ${{ secrets.RH_PASSWORD }}
+            registry: registry.redhat.io
 
         - name: build push sign and tag
           run: |
