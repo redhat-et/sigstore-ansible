@@ -2,4 +2,4 @@
   tasks:
     - name: Include sigstore scaffolding role
       ansible.builtin.include_role:
-        name: sigstore_scaffolding
+        name: tas_single_node
